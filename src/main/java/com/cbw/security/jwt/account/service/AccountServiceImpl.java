@@ -65,7 +65,7 @@ public class AccountServiceImpl implements AccountService
                 .build();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public ResponseAccount.Token refreshToken(String refreshToken) {
         // 먼저 리프레시 토큰을 검증한다.
@@ -84,6 +84,23 @@ public class AccountServiceImpl implements AccountService
 
         // 리프레시 토큰에 담긴 값을 그대로 액세스 토큰 생성에 활용한다.
         String accessToken = tokenProvider.createToken(authentication);
+        
+        
+        // 리프레시 토큰 유효시간이 1시간전이면 리프레시 토큰을 재발행한다.
+        //if(tokenProvider.isTokenExpired(refreshToken)) {  액세스토큰 유효시간
+        if(refreshTokenProvider.isTokenExpired(refreshToken)) {
+			System.out.println("리프레시 토큰재발급");
+			Long tokenWeight = account.getTokenWeight();
+	        
+	        System.out.println("리프레시토큰 재발급 tokenWeight : " + tokenWeight);
+	        
+	        refreshToken = refreshTokenProvider.createToken(authentication, tokenWeight);
+	        
+	        System.out.println("재발급된 리프레시토큰 : " + refreshToken);
+
+	        account.updateRefreshToken(refreshToken,1L); // 더티체킹에 의해 엔티티 변화 반영
+		}
+                
         // 기존 리프레시 토큰과 새로 만든 액세스 토큰을 반환한다.
         return ResponseAccount.Token.builder()
                 .accessToken(accessToken)

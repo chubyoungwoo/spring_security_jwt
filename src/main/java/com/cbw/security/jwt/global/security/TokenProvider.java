@@ -114,7 +114,8 @@ public class TokenProvider {
 	
 		System.out.println(this.tokenValidityInSeconds + " 300초(5분)전 토큰 재발급");
 		
-		if( Sec < 300) {  //토큰 재발급
+		//if( Sec < 300) {  //토큰 재발급
+		if( Sec < 40) { 
 			return true;
 		}
 		return false;

@@ -79,7 +79,7 @@ public class SecurityConfig {
 	                        new AntPathRequestMatcher("/api/v1/accounts/token"),
 	                        new AntPathRequestMatcher("/api/v1/members"),
 	                        new AntPathRequestMatcher("/api/v1/accounts/tokenRefreshAccessToken"),
-	                        new AntPathRequestMatcher("/profile")
+	                        new AntPathRequestMatcher("/api/v1/accounts/refresh")
 	                ).permitAll()
 	                .anyRequest().authenticated())
 	

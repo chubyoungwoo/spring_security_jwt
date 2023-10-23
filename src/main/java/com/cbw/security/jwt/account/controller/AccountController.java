@@ -4,14 +4,17 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import com.cbw.security.jwt.account.dto.RequestAccount;
 import com.cbw.security.jwt.account.dto.ResponseAccount;
 import com.cbw.security.jwt.account.service.AccountService;
 import com.cbw.security.jwt.global.dto.CommonResponse;
+import com.cbw.security.jwt.global.exception.error.InvalidRefreshTokenException;
 import com.cbw.security.jwt.global.security.CustomJwtFilter;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
@@ -33,6 +36,7 @@ public class AccountController
         // response header 에도 넣고 응답 객체에도 넣는다.
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(CustomJwtFilter.AUTHORIZATION_HEADER, "Bearer " + token.accessToken());
+        httpHeaders.add(CustomJwtFilter.REFRESH_HEADER, "Bearer " + token.refreshToken());
 
         // 응답
         CommonResponse response = CommonResponse.builder()
@@ -60,6 +64,35 @@ public class AccountController
 
         return new ResponseEntity<>(response, httpHeaders, HttpStatus.OK);
     }
+    
+    
+    @PutMapping("/refresh") // 리프레시 토큰(헤더값)을 활용한 액세스 토큰 갱신
+    public ResponseEntity<CommonResponse> refreshHeadToken(HttpServletRequest request) {
+    	
+    	String bearerToken = request.getHeader(CustomJwtFilter.REFRESH_HEADER);
+    	
+    	System.out.println("bearerToken : " + bearerToken);
+    	
+  		if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+  			
+  			System.out.println("bearerToken.substring(7) : " + bearerToken.substring(7));
+  			
+  			ResponseAccount.Token token = accountService.refreshToken(bearerToken.substring(7));
+  			 // response header 에도 넣고 응답 객체에도 넣는다.
+  	        HttpHeaders httpHeaders = new HttpHeaders();
+  	        httpHeaders.add(CustomJwtFilter.AUTHORIZATION_HEADER, "Bearer " + token.accessToken());
+  	        httpHeaders.add(CustomJwtFilter.REFRESH_HEADER, "Bearer " + token.refreshToken());
+  	        // 응답
+  	        CommonResponse response = CommonResponse.builder()
+  	                .success(true)
+  	            //    .response(token)
+  	                .build();
+  	        return new ResponseEntity<>(response, httpHeaders, HttpStatus.OK);
+  		} else {	
+  			throw new InvalidRefreshTokenException();
+  		}
+    }
+     
 
     //리프레시토큰 만료 API
     //-> 해당 계정의 가중치를 1 올린다. 그럼 나중에 해당 리프레시 토큰으로 갱신 요청이 들어와도 받아들여지지 않음
