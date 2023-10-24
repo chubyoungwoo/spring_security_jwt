@@ -34,17 +34,26 @@ public class AccountServiceImpl implements AccountService
     @Transactional
     @Override
     public ResponseAccount.Token authenticate(String username, String password) {
+    	
+    	System.out.println("authenticate 1 : " + username);
+    	
         // 받아온 유저네임과 패스워드를 이용해 UsernamePasswordAuthenticationToken 객체 생성
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(username, password);
+        
+        System.out.println("authenticate 2 : " + username);
 
         // authenticationToken 객체를 통해 Authentication 객체 생성
-        // 이 과정에서 CustomUserDetailsService 에서 우리가 재정의한 loadUserByUsername 메서드 호출
+        // 이 과정에서 UserDetailServiceImpl 에서 우리가 재정의한 loadUserByUsername 메서드 호출
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        
+        System.out.println("authenticate 3 : " + username);
 
         // 인증 정보를 기준으로 jwt access 토큰 생성
         String accessToken = tokenProvider.createToken(authentication);
 
+        System.out.println("authenticate 4 : " + username);
+        
         // 위에서 loadUserByUsername를 호출하였으므로 AccountAdapter가 시큐리티 컨텍스트에 저장되어 Account 엔티티 정보를 우리는 알 수 있음
         // 유저 정보에서 가중치를 꺼내 리프레시 토큰 가중치에 할당, 나중에 액세스토큰 재발급 시도 시 유저정보 가중치 > 리프레시 토큰이라면 실패
         Long tokenWeight = ((AccountAdapter)authentication.getPrincipal()).getAccount().getTokenWeight();
@@ -79,6 +88,10 @@ public class AccountServiceImpl implements AccountService
         
         System.out.println("refreshToken : " + refreshToken);
         System.out.println("DB RefreshToken : " + account.getRefreshToken());
+        // 리프레쉬 토큰이 없으면 에러 처리
+        if(account.getRefreshToken() == null ) {
+        	throw new UsernameNotFoundException("리프레쉬 토큰을 찾을 수 없습니다");
+        }
         // 사용자 디비 값에 있는 것과 가중치 비교, 디비 가중치가 더 크거나 db에 저장된 리프레쉬 토큰과 같이 다르면 유효하지 않음
         if(account.getTokenWeight() > refreshTokenProvider.getTokenWeight(refreshToken) || !account.getRefreshToken().equals(refreshToken) ) throw new InvalidRefreshTokenException();
 

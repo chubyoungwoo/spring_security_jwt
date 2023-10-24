@@ -16,7 +16,9 @@ import com.cbw.security.jwt.global.security.CustomJwtFilter;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/accounts")
 public class AccountController
@@ -31,8 +33,12 @@ public class AccountController
     @PostMapping("/token") // Account 계정인증 API
     public ResponseEntity<CommonResponse> authorize(@Valid @RequestBody RequestAccount.Login loginDto) {
 
+    	System.out.println("token 1 ");
+    	log.debug("===============================================");
         ResponseAccount.Token token = accountService.authenticate(loginDto.username(), loginDto.password());
 
+        System.out.println("token 2 ");
+        
         // response header 에도 넣고 응답 객체에도 넣는다.
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(CustomJwtFilter.AUTHORIZATION_HEADER, "Bearer " + token.accessToken());
